@@ -74,8 +74,9 @@ jobs:
             echo "Pinned core $pinned; lineage.subcult.tv reports ${live:-no core_version}"
             if [ "$live" != "$pinned" ]; then core=true; fi
           else
-            # The next push or a manual run with deploy_core catches up.
-            echo "::warning title=Live core version unknown::Could not read https://lineage.subcult.tv/api/version, so the core is not deployed. Rerun, or run the workflow on main with deploy_core."
+            # An unknown live version cannot prove that the pinned core is deployed.
+            echo "::warning title=Live core version unknown::Deploying the pinned core before the frontend."
+            core=true
           fi
           if [ "$EVENT" = workflow_dispatch ] && [ "$DISPATCH_CORE" = true ]; then core=true; fi
           # A wrapper change needs a new core image even when the version
@@ -100,7 +101,7 @@ jobs:
           else
             echo "::warning title=Last core deploy unknown::Comparing deploy/core.Dockerfile with $base only."
           fi
-          if ! git diff --quiet "$base" "$DEPLOY_REVISION" -- deploy/core.Dockerfile scripts/core_backup.py; then
+          if ! git diff --quiet "$base" "$DEPLOY_REVISION" -- deploy/archive-core.env deploy/core-release.json deploy/core.Dockerfile scripts/core_backup.py; then
             echo "deploy/core.Dockerfile changed since $base"; core=true
           fi
           if [ "$core" = true ] && [ "$ENABLED" != true ]; then
@@ -226,11 +227,9 @@ jobs:
           if [ "$status" != deployed ]; then echo "::error title=Core deploy not completed::receiver status $status"; exit 1; fi
           curl --fail --silent --show-error --retry 4 --retry-all-errors --max-time 30 \
             "https://lineage.subcult.tv/api/version?deploy-check=$DEPLOY_REVISION" > "$d/version.json"
-          # Cores before 0.4.11 do not report core_version; the receiver's checks still passed.
+          # The selected release must report its exact core version.
           live=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("core_version", ""))' "$d/version.json")
-          if [ -z "$live" ]; then
-            echo "::warning title=Core version not reported::lineage.subcult.tv runs a core older than 0.4.11, which does not report core_version"
-          elif [ "$live" != "$CORE_VERSION" ]; then
+          if [ "$live" != "$CORE_VERSION" ]; then
             echo "::error title=Live core version differs::lineage.subcult.tv reports $live, pinned $CORE_VERSION"; exit 1
           fi
           printf 'lineage.subcult.tv runs core %s from %s\n' "$live" "$DEPLOY_REVISION"

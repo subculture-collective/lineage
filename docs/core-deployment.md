@@ -25,14 +25,14 @@ It handles only `prepare-backup REVISION` itself; all other commands pass to
 the receiver's existing parser. Preparation takes the same application lock,
 checks current main before and after the dump, validates the archive's table
 of contents, and writes an atomic receipt with the revision, start time, byte
-count and SHA-256. PostgreSQL and the client both have bounded deadlines.
+count and SHA-256. An in-container foreground timeout bounds pg_dump itself and reaps it; the Docker client has a longer deadline.
 Credentials remain in host-owned runtime files, outside Git and CI output.
 
 The workflow prepares the backup after receiving the image and before deploying.
 The receiver's fixed `pre_deploy_command` invokes
 `/usr/bin/python3 /srv/deploy/lineage-core/core_backup.py --check`.
 That gate requires current main, an archive started within the last hour,
-matching size and hash, and a readable archive table of contents. It consumes
+the same read-only file identity, size, modification/change timestamps, and a readable archive table of contents. SHA-256 validation happens during preparation; the short gate does not reread 8 GB. It consumes
 the receipt before migration; a failed migration or a second deployment needs
 a new preparation. A partial or failed backup never creates a usable receipt.
 The gate runs under the receiver lock. Backups remain in

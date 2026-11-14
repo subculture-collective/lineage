@@ -12,6 +12,7 @@ import os
 from pathlib import Path
 import re
 import shlex
+import stat
 import subprocess
 import sys
 import time
@@ -36,9 +37,17 @@ def validate(receipt, revision, now):
     path = BACKUPS / receipt['file']
     if path.parent != BACKUPS or path.suffix != '.dump':
         raise ValueError('Invalid backup path')
-    if path.stat().st_size != receipt['bytes'] or digest(path) != receipt['sha256']:
-        raise ValueError('Backup bytes changed; prepare it again')
+    info = path.stat()
+    if not stat.S_ISREG(info.st_mode) or info.st_mode & 0o222:
+        raise ValueError('Backup must be a read-only regular file')
+    if fingerprint(path) != receipt['fingerprint']:
+        raise ValueError('Backup file changed; prepare it again')
     return path
+
+
+def fingerprint(path):
+    info = path.stat()
+    return [info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_ctime_ns]
 
 
 def list_dump(path):
@@ -46,6 +55,11 @@ def list_dump(path):
         subprocess.run(['docker', 'exec', '-i', CONTAINER, 'pg_restore', '-l'],
                        stdin=source, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                        check=True, timeout=60)
+
+
+def dump_command():
+    return ['docker', 'exec', CONTAINER, 'timeout', '--foreground', '--signal=TERM', '--kill-after=10s',
+            '3000s', 'pg_dump', '-U', 'arkhiv', '-d', DATABASE, '-Fc']
 
 
 def main():
@@ -81,16 +95,18 @@ def main():
             path = BACKUPS / (time.strftime('lineage-%Y%m%dT%H%M%SZ', time.gmtime()) + '.dump')
             part = path.with_suffix('.part')
             with part.open('xb') as output:
-                # PostgreSQL also has a deadline if the SSH client disappears.
-                subprocess.run(['docker', 'exec', '-e', 'PGOPTIONS=-c statement_timeout=3000000',
-                                CONTAINER, 'pg_dump', '-U', 'arkhiv', '-d', DATABASE, '-Fc'],
+                # Bound the process inside Docker; killing its client alone would
+                # leave pg_dump running. pg_dump resets statement_timeout itself.
+                subprocess.run(dump_command(),
                                stdout=output, stderr=subprocess.DEVNULL, check=True, timeout=3100)
                 output.flush()
                 os.fsync(output.fileno())
             list_dump(part)
             part.rename(path)
+            checksum = digest(path)
+            path.chmod(0o400)
             receipt = {'revision': revision, 'started_at': started, 'file': path.name,
-                       'bytes': path.stat().st_size, 'sha256': digest(path)}
+                       'bytes': path.stat().st_size, 'sha256': checksum, 'fingerprint': fingerprint(path)}
             receiver.assert_current_main(profile, revision)
             validate(receipt, revision, time.time())
             temporary = marker.with_suffix('.tmp')
