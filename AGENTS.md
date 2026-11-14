@@ -18,9 +18,9 @@ normalization provenance and editorial corrections remain independent. Re-import
 must preserve corrections. Media acquisition is a separate operator workflow;
 metadata workers never fetch audio. Playback uses engine-resolved, reviewed files.
 
-Core 0.4.4 supplies source-catalog module 1, source-discovery module 1,
+Core 0.4.11 supplies source-catalog module 1, source-discovery module 1,
 source-artist-photos module 1, source-artist-media module 1, batch playback
-reviews and nested source audio. Viewer 0.4.4 validates the resulting URLs. Use the pinned engine for
+reviews and nested source audio. Viewer 0.4.13 validates the resulting URLs. Use the pinned engine for
 normal development. `docker-compose.core-dev.yml` optionally builds the actual
 core from a canonical Arkhiv checkout for shared-engine changes. The frontend
 and dependency checks require compatible module versions.
@@ -63,5 +63,6 @@ date/artist views must honor source-catalog exclusions.
 The GitHub Actions `Deploy` workflow deploys the frontend from main; pull requests
 are verified by `PR CI`. The Gitea `template-check` workflow only verifies.
 Use docs/automatic-frontend-deployment.md for its scoped Dozor profile and rollback.
-Shared-engine pins, metadata workers, media review and acquisition keep their own
-release/operator lanes.
+Shared-engine deployments use a separate receiver key and a validated long-running
+backup before migration. See docs/core-deployment.md. Metadata workers, media
+review and acquisition remain separate operator workflows.

@@ -133,3 +133,5 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md).
 ## License
 
 The software is licensed under GPL-3.0-only. See [LICENSE](LICENSE). Recordings, artwork and artist images keep the terms set by their sources; the software license does not cover them. Lineage is an independent project and is not endorsed by the artists, tapers or Internet Archive.
+
+Core upgrades run through the separate deployment lane after a validated database backup; see [core deployment](docs/core-deployment.md).

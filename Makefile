@@ -16,6 +16,7 @@ lint: ## Run static analysis
 	pnpm --dir web run lint
 
 test: ## Run tests without watch mode
+	python3 -m unittest discover -s scripts -p 'test_*.py'
 	pnpm --dir web run test
 
 build: ## Build application artifacts
