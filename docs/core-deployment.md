@@ -5,6 +5,10 @@ Lineage's engine uses Compose project `lineage-core`, service `core`, at
 loopback API on port 28347 and existing database are retained. Almaz's public
 read-only allowlist remains the boundary for write and operator routes.
 
+The host receiver checks the existing Gitea mirror
+`PatrickFanella/arkhiv-live-music`; the wrapper source label uses that same
+identity. GitHub source remains `subculture-collective/lineage`.
+
 The independent `core` workflow job builds a labels-only wrapper from
 `deploy/archive-core.env`. It compares the live version and last successful
 core deployment with the pin and wrapper. `CORE_DEPLOY_ENABLED=true` enables

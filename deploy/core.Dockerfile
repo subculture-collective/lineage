@@ -10,7 +10,7 @@ FROM ${CORE_IMAGE}
 ARG REVISION
 ARG CORE_VERSION
 ARG CORE_REVISION
-LABEL org.opencontainers.image.source="https://git.subcult.tv/subculture-collective/lineage" \
+LABEL org.opencontainers.image.source="https://git.subcult.tv/PatrickFanella/arkhiv-live-music" \
       org.opencontainers.image.revision="${REVISION}" \
       org.opencontainers.image.version="${CORE_VERSION}" \
       org.subcult.archive-core.revision="${CORE_REVISION}"
