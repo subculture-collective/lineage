@@ -317,7 +317,8 @@ jobs:
           test "$(git rev-parse HEAD)" = "$DEPLOY_REVISION"
           image="fleet-deploy/lineage/web:$DEPLOY_REVISION"
           # The fleet-deploy receiver identifies the application by this Gitea source label.
-          docker build -f web/Dockerfile --label "org.opencontainers.image.revision=$DEPLOY_REVISION" \
+          # Use the runner resolver; bridge DNS failed after joining the tailnet.
+          docker build --network=host -f web/Dockerfile --label "org.opencontainers.image.revision=$DEPLOY_REVISION" \
             --label "org.opencontainers.image.source=https://git.subcult.tv/PatrickFanella/arkhiv-live-music" -t "$image" web
           docker run --rm --network none --entrypoint nginx "$image" -t
       - name: Deploy the built image and verify public HTML

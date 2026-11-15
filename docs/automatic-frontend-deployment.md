@@ -15,6 +15,8 @@ configuration: the existing LAN listener on `10.0.0.57:3041` and loopback API
 upstream at `127.0.0.1:28347`.
 The image's development nginx proxy uses Docker DNS. CI runs its nginx syntax
 check with networking disabled; deployment retains the production config bind.
+The image build uses host networking, matching the other archive consumers:
+Docker bridge DNS failed resolving npm after the runner joined the tailnet.
 
 CI uses this app's `HOMELAB_DEPLOY_KEY` and pinned `HOMELAB_KNOWN_HOSTS`, with
 an explicit SSH config and connection reuse disabled. The private fleet-deploy
